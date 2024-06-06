@@ -1,0 +1,13 @@
+chainlit
+langchain
+langchain_community
+PyPDF2
+pypdf
+chromadb
+langchainhub
+openai
+tiktoken
+python-dotenv
+langchain-openai
+tree-sitter
+tree-sitter-languages
