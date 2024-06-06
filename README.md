@@ -35,7 +35,7 @@ You must have Python 3.9 or later installed. Earlier versions of python may not 
 
 2. Create a virtualenv and activate it
    ```
-   python3 -m venv .venv && source .venv/bin/activate
+    && source .venv/bin/activate
    ```
 
 3. Run the following command in the terminal to install necessary python packages:

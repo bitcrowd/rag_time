@@ -98,23 +98,27 @@ def create_vector_database():
     
     # query it
     query = """
-    given the following code from phoenix/lib/phoenix/test/conn_test.ex, what would I need to change to persist conn.remote_ip in the same way as conn.host?
+    given the following code from `phoenix/lib/phoenix/test/conn_test.ex`, what would I need to change to persist conn.remote_ip in the same way as conn.host?
 
-    def recycle(conn, headers \\ ~w(accept accept-language authorization)) do
-        build_conn()
-        |> Map.put(:host, conn.host)
-        |> Plug.Test.recycle_cookies(conn)
-        |> Plug.Test.put_peer_data(Plug.Conn.get_peer_data(conn))
-        |> copy_headers(conn.req_headers, headers)  
-    end
+    ```
+        def recycle(conn, headers \\ ~w(accept accept-language authorization)) do
+            build_conn()
+            |> Map.put(:host, conn.host)
+            |> Plug.Test.recycle_cookies(conn)
+            |> Plug.Test.put_peer_data(Plug.Conn.get_peer_data(conn))
+            |> copy_headers(conn.req_headers, headers)  
+        end
+    ```
+
+
     """
-    
     source_documents = vector_database.similarity_search(query, k=10)
     for source_idx, source_doc in enumerate(source_documents):
         print(source_idx)
         print(repr(source_doc.metadata))
         print
         print
+    
 
 
 if __name__ == "__main__":
