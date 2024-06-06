@@ -12,8 +12,8 @@ from langchain_community.document_loaders import DirectoryLoader
 
 from langchain_community.vectorstores import Chroma
 
-from langchain.document_loaders.generic import GenericLoader
-from langchain.document_loaders.parsers import LanguageParser
+from langchain_community.document_loaders.generic import GenericLoader
+from langchain_community.document_loaders.parsers import LanguageParser
 from langchain_community.document_loaders import UnstructuredMarkdownLoader
 from langchain.text_splitter import Language
 
@@ -46,12 +46,12 @@ def create_vector_database():
     # len(loaded_documents)
 
     dotenv.load_dotenv()
-
+    parser=LanguageParser(language=Language.RUBY)
     loader = GenericLoader.from_filesystem(
         "./phoenix",
         glob="**/*",
         suffixes=[".ex", ".exs"],
-        parser=LanguageParser(language=Language.RUBY, parser_threshold=500),
+        parser=parser,
     )
     loaded_documents = loader.load()
 
@@ -97,12 +97,24 @@ def create_vector_database():
     vector_database.persist()
     
     # query it
-    query = "What is administrate"
-    source_documents = vector_database.similarity_search(query)
-    for source_idx, source_doc in enumerate(source_documents):
-        print(len(source_doc.page_content))
-        print
+    query = """
+    given the following code from phoenix/lib/phoenix/test/conn_test.ex, what would I need to change to persist conn.remote_ip in the same way as conn.host?
 
+    def recycle(conn, headers \\ ~w(accept accept-language authorization)) do
+        build_conn()
+        |> Map.put(:host, conn.host)
+        |> Plug.Test.recycle_cookies(conn)
+        |> Plug.Test.put_peer_data(Plug.Conn.get_peer_data(conn))
+        |> copy_headers(conn.req_headers, headers)  
+    end
+    """
+    
+    source_documents = vector_database.similarity_search(query, k=10)
+    for source_idx, source_doc in enumerate(source_documents):
+        print(source_idx)
+        print(repr(source_doc.metadata))
+        print
+        print
 
 
 if __name__ == "__main__":

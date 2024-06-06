@@ -1,3 +1,5 @@
+dataclasses-json == 0.5.7 
+unstructured-client
 chainlit
 langchain
 langchain_community
@@ -9,5 +11,5 @@ openai
 tiktoken
 python-dotenv
 langchain-openai
-tree-sitter
-tree-sitter-languages
+tree-sitter == 0.21.3
+tree-sitter-languages == 1.10.2
