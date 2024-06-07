@@ -1,10 +1,52 @@
 # rag_time
 
-# langchain-Ollama-Chainlit
+Simple Chat UI to chat about a private codebase using LLMs locally.
 
-Simple Chat UI as well as chat with documents using LLMs with Ollama (mistral model) locally, LangChaiin and Chainlit
+**Technology:**
 
-In these examples, we’re going to build a simpel chat UI and a chatbot QA app. We’ll learn how to:
+- [Ollama](https://ollama.ai/) and [llama3:8b](https://ollama.com/library/llama3:8b) as Large Language model
+- [LangChain](https://python.langchain.com/en/latest/modules/models/llms/integrations/huggingface_hub.html) as a framework for LLM
+- [Chainlit](https://docs.chainlit.io/) for the chat UI
+
+## Getting started
+
+### Prerequisites
+
+1. Make sure you have Python 3.9 or later installed
+2. Download and install [Ollama](https://ollama.com/download)
+3. Pull the model:
+
+   ```bash
+   ollama pull llama:3b
+   ```
+
+### Run the Chat bot
+
+1. Create a Python virtual environment and activate it:
+
+   ```bash
+   python3 -m venv .venv && source .venv/bin/activate
+   ```
+
+2. Install Python dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Set up the vector database:
+
+   ```bash
+   python ingest-code.py
+   ```
+
+4. Start the chat bot:
+
+   ```bash
+   chainlit run main.py
+   ```
+
+---
 
 #### Example 1
 
@@ -23,47 +65,6 @@ In these examples, we’re going to build a simpel chat UI and a chatbot QA app.
 
 ---
 
-### Chat with your documents 🚀
-
-- [Ollama](https://ollama.ai/) and `mistral`as Large Language model
-- [LangChain](https://python.langchain.com/en/latest/modules/models/llms/integrations/huggingface_hub.html) as a Framework for LLM
-- [Chainlit](https://docs.chainlit.io/) for deploying.
-
-## System Requirements
-
-You must have Python 3.9 or later installed. Earlier versions of python may not compile.
-
 ---
 
-## Steps to Replicate
-
-1. Rename example.env to .env with `cp example.env .env`and input the langsmith environment variables. This is optional.
-
-2. Create a virtualenv and activate it
-
-   ```
-    && source .venv/bin/activate
-   ```
-
-3. Run the following command in the terminal to install necessary python packages:
-
-   ```
-   pip install -r requirements.txt
-   ```
-
-4. Run the following command in your terminal to start the chat UI:
-
-   ```
-   # Example 1
-   python3 ingest.py
-   chainlit run main.py
-   ```
-
-   ***
-
-   ```
-   # Example 2
-   chainlit run rag.py
-   ```
-
-   ***
+## St
