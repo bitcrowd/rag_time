@@ -10,32 +10,12 @@ from langchain_community.vectorstores import Chroma
 from langchain_community.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-import chainlit as cl
 from langchain.chains import RetrievalQA
+from langchain_core.prompts import PromptTemplate
+import chainlit as cl
 
 ABS_PATH: str = os.path.dirname(os.path.abspath(__file__))
-#DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_mxbai-embed-large")
-#DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_sammcj__sfr-embedding-mistral:Q4_K_M")
-#DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_codellama__7b-code")
-#DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_snowflake-arctic-embed")
-#DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db")
-# DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_jina_base")
-# DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_jina-embeddings-v2-base-code")
-# DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_jina-embeddings-v2-base-ollama")
-# DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_BAAI-bge-base-en-v1.5")
-# DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_jina-embeddings-v2-base-code-local")
-# DB_DIR: str = os.path.join(ABS_PATH, "mastodon_db_jina-embeddings-v2-base-code-local")# 
-# DB_DIR: str = os.path.join(ABS_PATH, "carbonite_db_jina-embeddings-v2-base-code-local")
-DB_DIR: str = os.path.join(ABS_PATH, "phoenix_db_jina-embeddings-v2-base-code-local")
-
-# Set up RetrievelQA model
-# rag_prompt_mistral = hub.pull("rlm/rag-prompt-mistral")
-# rag_prompt = hub.pull("rlm/rag-prompt")
-# print("-------")
-# print(repr(rag_prompt))
-# print("-------")
-
-from langchain_core.prompts import PromptTemplate
+DB_PATH: str = os.path.join(ABS_PATH, "phoenix_db_jina-embeddings-v2-base-code-local")
 
 template = """Use the following pieces of context to answer the question at the end.
 If you don't know the answer, just say that you don't know, don't try to make up an answer.
@@ -47,59 +27,40 @@ Always say "thanks for asking!" at the end of the answer.
 Question: {question}
 
 Helpful Answer:"""
-rag_prompt = PromptTemplate.from_template(template)
+
+prompt = PromptTemplate.from_template(template)
 
 def load_model():
-    llm = Ollama(
+    return Ollama(
         model="llama3:8b",
         verbose=True,
         callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
     )
-    return llm
 
 
-def retrieval_qa_chain(llm, vectorstore):
-    qa_chain = RetrievalQA.from_chain_type(
+def qa_chain(llm, vectorstore):
+    return RetrievalQA.from_chain_type(
         llm,
         retriever=vectorstore.as_retriever(
-            search_type="similarity",  # Also test "mmr"
+            search_type="similarity",
             search_kwargs={"k": 10},
         ),
-        chain_type_kwargs={"prompt": rag_prompt},
+        chain_type_kwargs={"prompt": prompt},
         return_source_documents=True,
     )
-    return qa_chain
 
 
 def qa_bot():
     from langchain_openai import OpenAIEmbeddings
-    #persist_directory=DB_PATH, embedding_function=OllamaEmbeddings(model="sammcj/sfr-embedding-mistral:Q4_K_M")
-    #persist_directory=DB_PATH, embedding_function=OpenAIEmbeddings(disallowed_special=()
-    #persist_directory=DB_PATH, embedding_function=OllamaEmbeddings(model="snowflake-arctic-embed:latest")
     llm = load_model()
-    DB_PATH = DB_DIR
-    # vectorstore = Chroma(
-    #   persist_directory=DB_PATH, embedding_function=OpenAIEmbeddings(disallowed_special=())
-    # )
-    # vectorstore = Chroma(
-    #     persist_directory=DB_PATH, 
-    #     embedding_function=JinaEmbeddings(
-    #         jina_api_key="jina_3ddc3a9c7010462ba25b20032079740eceQ-7WlOhEcDNsO6ZTHHboc8vPR3", 
-    #         model_name="jina-embeddings-v2-base-code"
-    #     )
-    # )
-    # vectorstore = Chroma(
-    #     persist_directory=DB_PATH, 
-    #     embedding_function=OllamaEmbeddings(model="BAAI-bge-base-en-v1.5:latest")
-    # )
     vectorstore = Chroma(
         persist_directory=DB_PATH, 
-        embedding_function=HuggingFaceEmbeddings(model_name="jinaai/jina-embeddings-v2-base-code", model_kwargs={'trust_remote_code': True})
-    
+        embedding_function=HuggingFaceEmbeddings(
+            model_name="jinaai/jina-embeddings-v2-base-code",
+            model_kwargs={'trust_remote_code': True}
+        )
     )
-    
-    qa = retrieval_qa_chain(llm, vectorstore)
-    return qa
+    return qa_chain(llm, vectorstore)
 
 
 @cl.on_chat_start

@@ -20,17 +20,14 @@ from langchain.text_splitter import Language
 warnings.simplefilter("ignore")
 
 ABS_PATH: str = os.path.dirname(os.path.abspath(__file__))
-# DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db")
-# DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_nomic")
-# DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_jina_base")
-# DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_jina-embeddings-v2-base-code")
-# DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_my-jina-latest")
-# DB_DIR: str = os.path.join(ABS_PATH, "medgurus_db_BAAI-bge-base-en-v1.5")
-# DB_DIR: str = os.path.join(ABS_PATH, "carbonite_db_jina-embeddings-v2-base-code-local")
-DB_DIR: str = os.path.join(ABS_PATH, "phoenix_db_jina-embeddings-v2-base-code-local")
+DB_PATH: str = os.path.join(ABS_PATH, "phoenix_db_jina-embeddings-v2-base-code-local")
 
+language = Language.RUBY
+#language = Language.RUBY
+code_folder = "./phoenix"
+chunk_size = 3000
+chunk_overlap = 400
 
-# Create vector database
 def create_vector_database():
     """
     Creates a vector database using document loaders and embeddings.
@@ -40,63 +37,52 @@ def create_vector_database():
     and finally persists the embeddings into a Chroma vector database.
 
     """
-    # Initialize loaders for different file types
-    # pdf_loader = DirectoryLoader("data/", glob="**/*.pdf", loader_cls=PyPDFLoader)
-    # loaded_documents = pdf_loader.load()
-    # len(loaded_documents)
-
     dotenv.load_dotenv()
-    parser=LanguageParser(language=Language.RUBY)
+
+    chunked_documents = []
+    chunked_documents.extend(chunk_code())
+    chunked_documents.extend(chunk_docs())
+
+    embeddings = HuggingFaceEmbeddings(
+        model_name="jinaai/jina-embeddings-v2-base-code",
+        model_kwargs={'trust_remote_code': True}
+    )
+
+    vector_database = Chroma.from_documents(
+        documents=chunked_documents,
+        embedding=embeddings,
+        persist_directory=DB_PATH,
+    )
+
+    vector_database.persist()
+    query_vector_database(vector_database)
+
+
+def chunk_code():
+    parser=LanguageParser(language=language)
     loader = GenericLoader.from_filesystem(
-        "./phoenix",
+        code_folder,
         glob="**/*",
         suffixes=[".ex", ".exs"],
         parser=parser,
     )
     loaded_documents = loader.load()
-
-    ruby_splitter = RecursiveCharacterTextSplitter.from_language(
-        language=Language.RUBY, chunk_size=3000, chunk_overlap=400
+    splitter = RecursiveCharacterTextSplitter.from_language(
+        language=language, chunk_size=chunk_size, chunk_overlap=chunk_overlap
     )
-    chunked_documents = ruby_splitter.split_documents(loaded_documents)
+    chunked_documents = splitter.split_documents(loaded_documents)
+    return chunked_documents
 
-    md_loader = DirectoryLoader("phoenix/", glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)
-    loaded_md_documents = md_loader.load()
-    #len(loaded_documents)
 
-    # Split loaded documents into chunks
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=400)
-    chunked_documents.extend(text_splitter.split_documents(loaded_md_documents))
+def chunk_docs():
+    loader = DirectoryLoader(code_folder, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)
+    loaded_documents = loader.load()
+    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    chunked_documents = splitter.split_documents(loaded_documents)
+    return chunked_documents
 
-    # Initialize Ollama Embeddings
-    # embeddings  = OllamaEmbeddings(model="snowflake-arctic-embed:latest")
-    # embeddings  = OllamaEmbeddings(model="codellama:7b-code")
-    # embeddings = OpenAIEmbeddings(disallowed_special=())
-    # embeddings  = OllamaEmbeddings(model="nomic-embed-text:latest")
-    # embeddings = JinaEmbeddings(
-    #     jina_api_key="jina_1a0a922322a3475794b23d8fa28dd1ddifoDqIVARQooCC2BleVgiQWBkVti", 
-    #     model_name="jina-embeddings-v2-base-code"
-    # )
-    # embeddings  = OllamaEmbeddings(model="BAAI-bge-base-en-v1.5:latest")
 
-    embeddings = HuggingFaceEmbeddings(model_name="jinaai/jina-embeddings-v2-base-code", model_kwargs={'trust_remote_code': True})
-
-    #Create and persist a Chroma vector database from the chunked documents
-    # vector_database = Chroma.from_documents(
-    #     documents=chunked_documents,
-    #     embedding=open_ai_embeddings,
-    #     persist_directory=DB_DIR,
-    # )
-
-    vector_database = Chroma.from_documents(
-        documents=chunked_documents,
-        embedding=embeddings,
-        persist_directory=DB_DIR,
-    )
-
-    vector_database.persist()
-    
-    # query it
+def query_vector_database(vector_database):
     query = """
     given the following code from `phoenix/lib/phoenix/test/conn_test.ex`, what would I need to change to persist conn.remote_ip in the same way as conn.host?
 
@@ -106,7 +92,7 @@ def create_vector_database():
             |> Map.put(:host, conn.host)
             |> Plug.Test.recycle_cookies(conn)
             |> Plug.Test.put_peer_data(Plug.Conn.get_peer_data(conn))
-            |> copy_headers(conn.req_headers, headers)  
+            |> copy_headers(conn.req_headers, headers)
         end
     ```
 
@@ -118,8 +104,6 @@ def create_vector_database():
         print(repr(source_doc.metadata))
         print
         print
-    
-
 
 if __name__ == "__main__":
     create_vector_database()
