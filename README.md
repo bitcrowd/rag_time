@@ -34,37 +34,30 @@ Simple Chat UI to chat about a private codebase using LLMs locally.
    pip install -r requirements.txt
    ```
 
-3. Set up the vector database:
+3. Clone a example repository to question the Chat bot about it:
+
+   ```bash
+   git clone https://github.com/discourse/discourse
+   ```
+
+4. Set up the vector database:
 
    ```bash
    python ingest-code.py
    ```
 
-4. Start the chat bot:
+5. Start the chat bot:
 
    ```bash
    chainlit run main.py
    ```
 
----
+6. To exit the Python virtual environment after you are done:
 
-#### Example 1
+   ```bash
+   deactivate
+   ```
 
-- Create a simple Chat UI locally.
+### Make it your own
 
-#### Example 2
-
-- Ingest documents into vector database, store locally (creates a knowledge base)
-- Create a chainlit app based on that knowledge base.
-
-#### Example 3
-
-- Upload a document(pdf)
-- Create vector embeddings from that pdf
-- Create a chatbot app with the ability to display sources used to generate an answer
-
----
-
----
-
-## St
+Modify the `.env` file to run the Chat bot on your codebase and language.
