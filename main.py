@@ -1,11 +1,9 @@
 # import required dependencies
 # https://docs.chainlit.io/integrations/langchain
 import os
-from langchain import hub
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.embeddings import JinaEmbeddings
-from langchain_community.embeddings import HuggingFaceEmbeddings
+import warnings
 
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_community.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
@@ -14,8 +12,11 @@ from langchain.chains import RetrievalQA
 from langchain_core.prompts import PromptTemplate
 import chainlit as cl
 
-ABS_PATH: str = os.path.dirname(os.path.abspath(__file__))
-DB_PATH: str = os.path.join(ABS_PATH, "phoenix_db_jina-embeddings-v2-base-code-local")
+from helpers import load_env
+
+warnings.simplefilter("ignore")
+
+attrs = load_env()
 
 template = """Use the following pieces of context to answer the question at the end.
 If you don't know the answer, just say that you don't know, don't try to make up an answer.
@@ -32,11 +33,19 @@ prompt = PromptTemplate.from_template(template)
 
 def load_model():
     return Ollama(
-        model="llama3:8b",
+        model=attrs['OLLAMA_MODEL'],
         verbose=True,
         callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
     )
 
+def load_vector_db():
+    return Chroma(
+        persist_directory=attrs['VECTOR_DB_PATH'],
+        embedding_function=HuggingFaceEmbeddings(
+            model_name="jinaai/jina-embeddings-v2-base-code",
+            model_kwargs={'trust_remote_code': True}
+        )
+    )
 
 def qa_chain(llm, vectorstore):
     return RetrievalQA.from_chain_type(
@@ -49,17 +58,9 @@ def qa_chain(llm, vectorstore):
         return_source_documents=True,
     )
 
-
 def qa_bot():
-    from langchain_openai import OpenAIEmbeddings
     llm = load_model()
-    vectorstore = Chroma(
-        persist_directory=DB_PATH, 
-        embedding_function=HuggingFaceEmbeddings(
-            model_name="jinaai/jina-embeddings-v2-base-code",
-            model_kwargs={'trust_remote_code': True}
-        )
-    )
+    vectorstore = load_vector_db()
     return qa_chain(llm, vectorstore)
 
 
@@ -94,11 +95,8 @@ async def main(message):
     chain = cl.user_session.get("chain")
     cb = cl.AsyncLangchainCallbackHandler()
     cb.answer_reached = True
-    # res=await chain.acall(message, callbacks=[cb])
     res = await chain.acall(message.content, callbacks=[cb])
-    # print(f"response: {res}")
     answer = res["result"]
-    #answer = answer.replace(".", ".\n")
     source_documents = res["source_documents"]
 
     text_elements = []  # type: List[cl.Text]
