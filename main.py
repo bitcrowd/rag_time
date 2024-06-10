@@ -3,14 +3,14 @@
 import os
 import warnings
 
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain_community.llms import Ollama
+import chainlit as cl
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import RetrievalQA
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.llms import Ollama
+from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import PromptTemplate
-import chainlit as cl
 
 from helpers import load_env
 
@@ -31,21 +31,24 @@ Helpful Answer:"""
 
 prompt = PromptTemplate.from_template(template)
 
+
 def load_model():
     return Ollama(
-        model=attrs['OLLAMA_MODEL'],
+        model=attrs["OLLAMA_MODEL"],
         verbose=True,
         callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
     )
 
+
 def load_vector_db():
     return Chroma(
-        persist_directory=attrs['VECTOR_DB_PATH'],
+        persist_directory=attrs["VECTOR_DB_PATH"],
         embedding_function=HuggingFaceEmbeddings(
             model_name="jinaai/jina-embeddings-v2-base-code",
-            model_kwargs={'trust_remote_code': True}
-        )
+            model_kwargs={"trust_remote_code": True},
+        ),
     )
+
 
 def qa_chain(llm, vectorstore):
     return RetrievalQA.from_chain_type(
@@ -57,6 +60,7 @@ def qa_chain(llm, vectorstore):
         chain_type_kwargs={"prompt": prompt},
         return_source_documents=True,
     )
+
 
 def qa_bot():
     llm = load_model()
@@ -106,7 +110,9 @@ async def main(message):
             source_name = f"{source_doc.metadata['source']}"
             # Create the text element referenced in the message
             text_elements.append(
-                cl.Text(content=source_doc.page_content, name=source_name, display="side")
+                cl.Text(
+                    content=source_doc.page_content, name=source_name, display="side"
+                )
             )
         source_names = [text_el.name for text_el in text_elements]
 
