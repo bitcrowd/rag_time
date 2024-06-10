@@ -12,5 +12,6 @@ def load_env():
 
     attrs['CODEBASE_PATH'] = COCEBASE_PATH_ABS
     attrs['VECTOR_DB_PATH'] = VECTOR_DB_PATH
+    attrs['CODE_SUFFIXES'] = list(map(str.strip, attrs['CODE_SUFFIXES'].split(",")))
 
     return attrs

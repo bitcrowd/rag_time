@@ -52,7 +52,7 @@ def chunk_code():
     loader = GenericLoader.from_filesystem(
         attrs['CODEBASE_PATH'],
         glob="**/*",
-        suffixes=[attrs['CODE_SUFFIX']],
+        suffixes=attrs['CODE_SUFFIXES'],
         parser=parser,
     )
     loaded_documents = loader.load()
