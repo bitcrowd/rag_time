@@ -4,7 +4,7 @@ Simple Chat UI to chat about a private codebase using LLMs locally.
 
 **Technology:**
 
-- [Ollama](https://ollama.ai/) and [llama3:8b](https://ollama.com/library/llama3:8b) as Large Language model
+- [Ollama](https://ollama.ai/) and [llama3:8b](https://ollama.com/library/llama3:8b) as Large Language Model
 - [LangChain](https://python.langchain.com/en/latest/modules/models/llms/integrations/huggingface_hub.html) as a framework for LLM
 - [Chainlit](https://docs.chainlit.io/) for the chat UI
 
@@ -34,7 +34,7 @@ Simple Chat UI to chat about a private codebase using LLMs locally.
    pip install -r requirements.txt
    ```
 
-3. Clone a example repository to question the Chat bot about it:
+3. Clone a example repository to question the chat bot about:
 
    ```bash
    git clone https://github.com/discourse/discourse
@@ -60,4 +60,4 @@ Simple Chat UI to chat about a private codebase using LLMs locally.
 
 ### Make it your own
 
-Modify the `.env` file to run the Chat bot on your codebase and language.
+Modify the `.env` file to run the chat bot on your codebase and language.
