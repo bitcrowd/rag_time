@@ -34,7 +34,7 @@ Simple Chat UI to chat about a private codebase using LLMs locally.
    pip install -r requirements.txt
    ```
 
-3. Clone a example repository to question the chat bot about:
+3. Clone an example repository to question the chat bot about:
 
    ```bash
    git clone https://github.com/discourse/discourse
@@ -52,7 +52,7 @@ Simple Chat UI to chat about a private codebase using LLMs locally.
    chainlit run main.py
    ```
 
-6. To exit the Python virtual environment after you are done:
+6. To exit the Python virtual environment after you are done, run:
 
    ```bash
    deactivate
