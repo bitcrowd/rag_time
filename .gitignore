@@ -21,6 +21,10 @@ sdist/
 var/
 wheels/
 share/python-wheels/
+.qnd/
+.venv
+phoenix/
+phoenix_db_jina-embeddings-v2-base-code-local/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -122,7 +126,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/

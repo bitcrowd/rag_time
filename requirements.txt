@@ -1,0 +1,21 @@
+dataclasses-json == 0.5.7
+unstructured
+unstructured-client
+chainlit
+langchain
+langchain-community
+PyPDF2
+pypdf
+chromadb
+langchainhub
+openai
+tiktoken
+python-dotenv
+langchain-openai
+tree-sitter == 0.21.3
+tree-sitter-languages == 1.10.2
+markdown
+sentence-transformers
+black
+flake8
+isort
