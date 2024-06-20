@@ -5,6 +5,7 @@ Simple Chat UI to chat about a private codebase using LLMs locally.
 **Technology:**
 
 - [Ollama](https://ollama.ai/) and [llama3:8b](https://ollama.com/library/llama3:8b) as Large Language Model
+- [jina-embeddings-v2-base-code](https://jina.ai/news/elevate-your-code-search-with-new-jina-code-embeddings) as Embedding Model
 - [LangChain](https://python.langchain.com/en/latest/modules/models/llms/integrations/huggingface_hub.html) as a framework for LLM
 - [Chainlit](https://docs.chainlit.io/) for the chat UI
 
