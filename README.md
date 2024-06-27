@@ -18,7 +18,7 @@ Simple Chat UI to chat about a private codebase using LLMs locally.
 3. Pull the model:
 
    ```bash
-   ollama pull llama:3b
+   ollama pull llama3:8b
    ```
 
 ### Run the Chat bot
