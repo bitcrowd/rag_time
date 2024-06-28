@@ -4,6 +4,7 @@ unstructured-client
 chainlit
 langchain
 langchain-community
+langchain-text-splitters >= 0.2.2
 PyPDF2
 pypdf
 chromadb
