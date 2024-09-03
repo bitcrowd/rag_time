@@ -21,6 +21,12 @@ Simple Chat UI to chat about a private codebase using LLMs locally.
    ollama pull llama3:8b
    ```
 
+4. Run the model:
+
+   ```bash
+   ollama run llama3:8b
+   ```
+
 ### Run the Chat bot
 
 1. Create a Python virtual environment and activate it:
