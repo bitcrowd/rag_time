@@ -69,8 +69,48 @@ Simple Chat UI to chat about a private codebase using LLMs locally.
 
 Modify the `.env` file to run the chat bot on your codebase and language.
 
-## Ask Questions
+### Ask Questions
 
 "The file "....ex" is missing a module comment. Can you create one that helps new team members understand what it does, and how it works?"
 
 "Given the following Mission, can you please explain what files I should change, and how I can implement the changes?"
+
+## Enhancements
+
+### Use the advanced script to process the codebase
+
+The script `ingest-code.py` is intended to be easy to understand and to modify. For more control over the codebase processing, you can use the `process_codebase.py` script. 
+
+```bash
+usage: process_codebase.py [-h] [-c] [-cd CHUNKS_DIR] [-db CHROMA_DB_DIR] [-oh] [-ed] base_directory
+
+Process subdirectories for chunking and ingestion.
+
+positional arguments:
+  base_directory        Base directory to process
+
+options:
+  -h, --help            show this help message and exit
+  -c, --clean           Clean existing chunks and chroma db before processing
+  -cd CHUNKS_DIR, --chunks_dir CHUNKS_DIR
+                        If given, chunks are stored into this directory.
+  -db CHROMA_DB_DIR, --chroma_db_dir CHROMA_DB_DIR
+                        Directory for Chroma DB (default: .rag_time/chroma_db)
+  -oh, --omit-headers   Do not add filename header in chunks
+  -ed, --empty_db       Only create an empty chroma db
+
+```
+
+To do achieve the same result as `ingest-code.py`, you can run:
+
+```bash
+python process_codebase.py -c -db .rag_time/chroma_db ./discourse
+```
+
+To use this in chainlit, you can set the `CODEBASE_PATH` environment variable to the directory you want to process:
+
+```bash
+export VECTOR_DB_PATH=".rag_time/chroma_db" ; chainlit run main.py
+```
+
+The switches `-c`, `-ed` and `-oh` are useful to evaluate the impact of different processing options.

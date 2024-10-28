@@ -20,3 +20,9 @@ sentence-transformers
 black
 flake8
 isort
+esprima
+langchain-chroma
+langchain-huggingface
+optimum
+onnx
+onnxruntime

@@ -20,8 +20,6 @@ attrs = load_env()
 
 template = """Use the following pieces of context to answer the question at the end.
 If you don't know the answer, just say that you don't know, don't try to make up an answer.
-Use three sentences maximum and keep the answer as concise as possible.
-Always say "thanks for asking!" at the end of the answer.
 
 {context}
 
@@ -41,16 +39,19 @@ def load_model():
 
 
 def load_vector_db():
+    chroma_db_dir_default = attrs["VECTOR_DB_PATH"]
+    chroma_db_dir = os.environ.get("VECTOR_DB_PATH", chroma_db_dir_default)
+    print(f"Loading Chroma DB from {chroma_db_dir}")    
+
     return Chroma(
-        persist_directory=attrs["VECTOR_DB_PATH"],
+        persist_directory=chroma_db_dir,
         embedding_function=HuggingFaceEmbeddings(
             model_name="jinaai/jina-embeddings-v2-base-code",
             model_kwargs={"trust_remote_code": True},
         ),
     )
 
-
-def qa_chain(llm, vectorstore):
+def retrieval_qa_chain(llm, vectorstore):
     return RetrievalQA.from_chain_type(
         llm,
         retriever=vectorstore.as_retriever(
@@ -65,7 +66,7 @@ def qa_chain(llm, vectorstore):
 def qa_bot():
     llm = load_model()
     vectorstore = load_vector_db()
-    return qa_chain(llm, vectorstore)
+    return retrieval_qa_chain(llm, vectorstore)
 
 
 @cl.on_chat_start
@@ -108,10 +109,11 @@ async def main(message):
     if source_documents:
         for source_idx, source_doc in enumerate(source_documents):
             source_name = f"{source_doc.metadata['source']}"
+            language = source_doc.metadata.get('language', 'text')
             # Create the text element referenced in the message
             text_elements.append(
                 cl.Text(
-                    content=source_doc.page_content, name=source_name, display="side"
+                    content=source_doc.page_content, name=source_name, display="side", language=language
                 )
             )
         source_names = [text_el.name for text_el in text_elements]
