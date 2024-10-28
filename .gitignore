@@ -23,6 +23,9 @@ wheels/
 share/python-wheels/
 .qnd/
 .venv
+.venv-rag-time/
+.codebase
+.files
 phoenix/
 phoenix_db_jina-embeddings-v2-base-code-local/
 *.egg-info/
