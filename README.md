@@ -32,7 +32,7 @@ Simple Chat UI to chat about a private codebase using LLMs locally.
 1. Create a Python virtual environment and activate it:
 
    ```bash
-   python3 -m venv .venv && source .venv/bin/activate
+   python3 -m venv .venv-rag-time && source .venv-rag-time/bin/activate
    ```
 
 2. Install Python dependencies:
@@ -68,3 +68,9 @@ Simple Chat UI to chat about a private codebase using LLMs locally.
 ## Make it your own
 
 Modify the `.env` file to run the chat bot on your codebase and language.
+
+## Ask Questions
+
+"The file "....ex" is missing a module comment. Can you create one that helps new team members understand what it does, and how it works?"
+
+"Given the following Mission, can you please explain what files I should change, and how I can implement the changes?"
