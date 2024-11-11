@@ -13,7 +13,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 
-from helpers import load_env
+from utils.helpers import load_env
 
 warnings.simplefilter("ignore")
 

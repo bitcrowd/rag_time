@@ -17,13 +17,14 @@ class Commit(Base):
         for commit_path in self.commit_paths:
             file_changes += f"{commit_path}\n"
         output = f"""
-            Commit {self.hash}
+Commit {self.hash}
+----- Begin Commit message ----
+{self.message}
+----- End Commit message ----
 
-            ----- Begin Commit message ----
-            {self.message}
-            ----- End Commit message ----
-            ----- Begin File Changes ----
-            {file_changes}----- End File Changes -----
+----- Begin File Changes ----
+{file_changes}
+----- End File Changes -----
             """
         return textwrap.dedent(output).strip()
 

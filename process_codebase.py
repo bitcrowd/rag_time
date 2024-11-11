@@ -22,9 +22,20 @@ from langchain_community.document_loaders.parsers import LanguageParser
 from langchain_chroma import Chroma  # Updated import
 from langchain_huggingface import HuggingFaceEmbeddings
 
+from langchain.schema import Document
+
+from sqlalchemy import create_engine, Column, String, ForeignKey, Integer, UniqueConstraint
+
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
+
 # Local imports
 from count_chroma_records import count_chroma_records
-from helpers import load_env
+from utils.helpers import load_env
+from index_git_metadata import connect_or_create_database
+
+from models import Base, Commit, Path, CommitPath
 
 # Suppress warnings
 warnings.simplefilter("ignore")
@@ -154,7 +165,28 @@ def chunk_code_files(directory, language_config, omit_headers):
         print(f"Processed {len(lang_chunks)} chunks for {lang}")
     return code_chunks
 
-def chunk_codebase(directory: str, chunks_dir: str, omit_headers: bool) -> list:
+def chunk_metadata(metadata_db_path):
+    session = connect_or_create_database(metadata_db_path)
+    retrieved_commits = session.query(Commit).all()
+    documents = []
+
+    for commit in retrieved_commits:
+        documents.append(Document(
+            metadata={
+                "source": commit.hash,
+                "language": "Commit Message"
+            },
+            page_content=str(commit)
+        ))
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP
+    )
+    chunked_documents = splitter.split_documents(documents)
+
+    return chunked_documents
+
+def chunk_codebase(directory: str, chunks_dir: str, omit_headers: bool, metadata_db_path: str) -> list:
     """
     Process and chunk an entire codebase.
 
@@ -183,6 +215,11 @@ def chunk_codebase(directory: str, chunks_dir: str, omit_headers: bool) -> list:
     code_chunks = chunk_code_files(directory, LANGUAGE_CONFIG, omit_headers)
     print(f"Processed {len(code_chunks)} chunks for code")
     chunks.extend(code_chunks)
+
+    if metadata_db_path:
+        metadata_chunks = chunk_metadata(metadata_db_path)
+        print(f"Processed {len(metadata_chunks)} chunks for commit metadata")
+        chunks.extend(metadata_chunks)
 
     if chunks_dir:
         save_chunks(chunks, chunks_dir)
@@ -237,19 +274,21 @@ def store_embeddings(chroma_db_dir: str, chunks: list) -> str:
     print(f"Now {count_chroma_records(vector_database)} records in {chroma_db_dir}")
     return "embeddings created"
 
-def process_codebase(directory, chunks_dir, chroma_db_dir, clean, empty_db, omit_headers):
+def process_codebase(directory, chunks_dir, chroma_db_dir, clean, empty_db, omit_headers, metadata_db_path):
     if clean:
         cleanup_directories(chunks_dir, chroma_db_dir)
     
     if empty_db:
         chunks = []
     else:
-        chunks = chunk_codebase(directory, chunks_dir, omit_headers)
+        chunks = chunk_codebase(directory, chunks_dir, omit_headers, metadata_db_path)
+        
     
     store_embeddings(chroma_db_dir, chunks)
 
     if chunks_dir is not None:
         save_chunks(chunks, chunks_dir)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process subdirectories for chunking and ingestion.")
@@ -259,6 +298,21 @@ if __name__ == "__main__":
     parser.add_argument("-db", "--chroma_db_dir", default=".rag_time/chroma_db", help="Directory for Chroma DB (default: .rag_time/chroma_db)")
     parser.add_argument("-oh", "--omit-headers", action="store_true", help="Don't add filename in chunks")
     parser.add_argument("-ed", "--empty_db", action="store_true", help="Only create an empty chroma db")
+    parser.add_argument("-md", "--metadata-db-dir", help="Directory to store the metadata SQLite database")
+    parser.add_argument("-mn", "--metadata-db-name", default="git_metadata.db", help="Name of the SQLite database file (default: git_metadata.db)")
+
     args = parser.parse_args()
 
-    process_codebase(args.base_directory, args.chunks_dir, args.chroma_db_dir, args.clean, args.empty_db, args.omit_headers)
+    if args.metadata_db_dir:
+        metadata_db_dir = os.path.abspath(args.metadata_db_dir)
+        metadata_db_path = os.path.join(metadata_db_dir, args.metadata_db_name)
+    else:
+        metadata_db_path = None
+
+    process_codebase(args.base_directory, 
+                     args.chunks_dir, 
+                     args.chroma_db_dir,
+                     args.clean,
+                     args.empty_db,
+                     args.omit_headers,
+                     metadata_db_path)

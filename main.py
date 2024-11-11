@@ -12,7 +12,7 @@ from langchain_community.llms import Ollama
 from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import PromptTemplate
 
-from helpers import load_env
+from utils.helpers import load_env
 
 warnings.simplefilter("ignore")
 
@@ -86,6 +86,24 @@ async def start():
     await welcome_message.update()
     cl.user_session.set("chain", chain)
 
+def deduplicate_sources(source_documents):
+    print("Deduplicating sources:", ",\n".join([f"{doc.metadata['source']} ({doc.metadata.get('language', 'unknown')})" 
+                                               for doc in source_documents]))
+    
+    unique_sources = []
+    seen_sources = set()
+    
+    for doc in source_documents:
+        # Create a tuple of source and language as the unique identifier
+        source_key = (doc.metadata['source'], doc.metadata.get('language', 'unknown'))
+        if source_key not in seen_sources:
+            seen_sources.add(source_key)
+            unique_sources.append(doc)
+    
+    print("Unique sources:", ",\n".join([f"{doc.metadata['source']} ({doc.metadata.get('language', 'unknown')})" 
+                                       for doc in unique_sources]))
+    
+    return unique_sources
 
 @cl.on_message
 async def main(message):
@@ -97,12 +115,14 @@ async def main(message):
     call method with the given message and callback. The bot's answer and source
     documents are then extracted from the response.
     """
+    print("Received message:", message.content)
+
     chain = cl.user_session.get("chain")
     cb = cl.AsyncLangchainCallbackHandler()
     cb.answer_reached = True
     res = await chain.acall(message.content, callbacks=[cb])
     answer = res["result"]
-    source_documents = res["source_documents"]
+    source_documents = deduplicate_sources(res["source_documents"])
 
     text_elements = []  # type: List[cl.Text]
 
