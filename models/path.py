@@ -13,39 +13,47 @@ class Path(Base):
 
     __table_args__ = (UniqueConstraint('path', name='uix_path'),)
 
-    def __str__(self):
-        output = f"{self.path}\n\n"
+    def _format_commit_history(self):
+        output = []
         for commit_path in self.commit_paths:
-            output += f"{commit_path.change_type}\t{commit_path.commit.hash}\t{commit_path.commit.short_message()}\n"
-        
-        # Count occurrences of related paths
+            output.append(f"{commit_path.change_type}\t{commit_path.commit.hash}\t{commit_path.commit.short_message()}")
+        return "\n".join(output)
+
+    def _get_related_paths_counts(self):
         related_paths = Counter()
         for commit_path in self.commit_paths:
             for related_commit_path in commit_path.commit.commit_paths:
                 related_path = related_commit_path.path
                 if related_path != self:
                     related_paths[related_path.path] += 1
-        
-        # Filter out items with count less than 5
-        filtered_related_paths = {path: count for path, count in related_paths.items() if count >= 5}
-        
-        # Sort related paths by count in descending order
-        sorted_related_paths = sorted(
-            filtered_related_paths.items(),
-            key=itemgetter(1),
-            reverse=True
-        )
+        return related_paths
 
-        # Apply the new condition
-        if len(sorted_related_paths) > 10:
-            max_count = sorted_related_paths[0][1]
-            min_count = sorted_related_paths[-1][1]
-            if max_count - min_count > 1:
-                sorted_related_paths = sorted_related_paths[:10]
-            else:
-                sorted_related_paths = []
+    def _filter_and_sort_related_paths(self, related_paths, min_count=5):
+        filtered = {path: count for path, count in related_paths.items() if count >= min_count}
+        return sorted(filtered.items(), key=itemgetter(1), reverse=True)
 
-        output += f"\nRelated paths (path: count):\n"
-        for path, count in sorted_related_paths:
-            output += f"\t{path}: {count}\n"
-        return output
+    def _apply_top_ten_filter(self, sorted_paths):
+        if len(sorted_paths) <= 10:
+            return sorted_paths
+            
+        max_count = sorted_paths[0][1]
+        min_count = sorted_paths[-1][1]
+        return sorted_paths[:10] if max_count - min_count > 1 else []
+
+    def _format_related_paths(self, related_paths):
+        return "\n".join(f"\t{path}: {count}" for path, count in related_paths)
+
+    def __str__(self):
+        parts = [
+            f"{self.path}\n",
+            self._format_commit_history(),
+            "\nRelated paths (path: count):",
+            self._format_related_paths(
+                self._apply_top_ten_filter(
+                    self._filter_and_sort_related_paths(
+                        self._get_related_paths_counts()
+                    )
+                )
+            )
+        ]
+        return "\n".join(parts)
